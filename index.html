@@ -4,17 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Math List Calculator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!--<script src="https://cdn.tailwindcss.com"></script>-->
+    <link href="output.css" rel="stylesheet">
     <script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          red: '#ef4444',
-        },
-      },
-    },
-  }
+        /*let css = new CSSStyleSheet();
+        css.replaceSync( "@import url( output.css )" );
+        document.adoptedStyleSheets = [css];*/
+        /*var link = document.createElement('link');
+link.setAttribute('rel', 'stylesheet');
+link.setAttribute('href', 'output.css');
+document.head.appendChild(link);*/
     </script>
 </head>
 <body class="bg-gray-100 p-8">
@@ -43,15 +42,16 @@ class ListItem extends HTMLElement {
 
     render() {
         const value = this.getAttribute('value') || '';
+        var css = new CSSStyleSheet()
+        css.replaceSync( "@import url( output.css )" )
+        this.shadowRoot.adoptedStyleSheets = [css] 
         this.shadowRoot.innerHTML = `
+            <link rel="stylesheet" href="output.css">
             <li class="flex justify-between items-center py-2">
                 <input type="number" value="${value}" class="border rounded px-2 py-1 w-24 mr-2">
-                <button class="delete-btn bg-blue-500 text-white px-2 py-1 rounded">Delete</button>
+                <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
             </li>
         `;
-        let script = this.shadowRoot.createElement("script");
-        script.src = "https://cdn.tailwindcss.com";
-        this.shadowRoot.children[0].prepend(script);
         this.shadowRoot.querySelector('input').addEventListener('change', (e) => {
             this.setAttribute('value', e.target.value);
         });
