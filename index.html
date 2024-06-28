@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Math List Calculator</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          red: '#ef4444',
+        },
+      },
+    },
+  }
+    </script>
 </head>
 <body class="bg-gray-100 p-8">
     <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl">
@@ -35,10 +46,12 @@ class ListItem extends HTMLElement {
         this.shadowRoot.innerHTML = `
             <li class="flex justify-between items-center py-2">
                 <input type="number" value="${value}" class="border rounded px-2 py-1 w-24 mr-2">
-                <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+                <button class="delete-btn bg-blue-500 text-white px-2 py-1 rounded">Delete</button>
             </li>
         `;
-
+        let script = this.shadowRoot.createElement("script");
+        script.src = "https://cdn.tailwindcss.com";
+        this.shadowRoot.children[0].prepend(script);
         this.shadowRoot.querySelector('input').addEventListener('change', (e) => {
             this.setAttribute('value', e.target.value);
         });
