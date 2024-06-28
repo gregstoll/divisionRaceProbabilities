@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math List Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl">
+        <div class="p-8">
+            <h1 class="text-2xl font-bold mb-4">Math List Calculator</h1>
+            <div class="mb-4">
+                <button id="addItem" class="bg-blue-500 text-white px-4 py-1 rounded">Add New Item</button>
+            </div>
+            <ul id="itemList" class="mb-4"></ul>
+            <button id="calculate" class="bg-green-500 text-white px-4 py-2 rounded">Calculate Sum</button>
+            <p id="result" class="mt-4 font-bold"></p>
+        </div>
+    </div>
+
+    <script>
+class ListItem extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'open' });
+    }
+
+    connectedCallback() {
+        this.render();
+    }
+
+    render() {
+        const value = this.getAttribute('value') || '';
+        this.shadowRoot.innerHTML = `
+            <li class="flex justify-between items-center py-2">
+                <input type="number" value="${value}" class="border rounded px-2 py-1 w-24 mr-2">
+                <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+            </li>
+        `;
+
+        this.shadowRoot.querySelector('input').addEventListener('change', (e) => {
+            this.setAttribute('value', e.target.value);
+        });
+
+        this.shadowRoot.querySelector('.delete-btn').addEventListener('click', () => {
+            this.remove();
+        });
+    }
+}
+
+customElements.define('list-item', ListItem);
+
+document.addEventListener('DOMContentLoaded', () => {
+    const addItemButton = document.getElementById('addItem');
+    const itemList = document.getElementById('itemList');
+    const calculateButton = document.getElementById('calculate');
+    const resultElement = document.getElementById('result');
+
+    addItemButton.addEventListener('click', () => {
+        const listItem = document.createElement('list-item');
+        listItem.setAttribute('value', '0');
+        itemList.appendChild(listItem);
+    });
+
+    calculateButton.addEventListener('click', () => {
+        const items = itemList.querySelectorAll('list-item');
+        const sum = Array.from(items).reduce((total, item) => {
+            return total + parseFloat(item.getAttribute('value') || 0);
+        }, 0);
+        resultElement.textContent = `Sum: ${sum}`;
+    });
+});
+    </script>
+</body>
+</html>
