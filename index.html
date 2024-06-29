@@ -12,9 +12,9 @@
         <div class="p-8">
             <h1 class="text-2xl font-bold mb-4">Math List Calculator</h1>
             <division-element readonly="true">
-                <team-games-back name="Astros" games-back="0"></team-games-back>
-                <team-games-back name="Blue Jays" games-back="2.5"></team-games-back>
-                <team-games-back name="Cubs" games-back="3"></team-games-back>
+                <team-games-back team-name="Astros" games-back="0"></team-games-back>
+                <team-games-back team-name="Blue Jays" games-back="2"></team-games-back>
+                <team-games-back team-name="Cubs" games-back="3"></team-games-back>
             </division-element>
             <br><br>
             <division-element></division-element>
@@ -33,27 +33,33 @@ class TeamGamesBack extends HTMLElement {
     get readonly() {
         return this.getAttribute('readonly') === "true";
     }
+    get gamesBack() {
+        return parseInt(this.getAttribute('games-back'), 10);
+    }
+    get teamName() {
+        return this.getAttribute('team-name').trim();
+    }
+
     render() {
-        const gamesBack = this.getAttribute('games-back') || 0;
-        const name = this.getAttribute('name');
-        // TODO - coerce values to nearest 0.5?
         /*this.shadowRoot.innerHTML = `
             <link rel="stylesheet" href="output.css">
             <li class="flex justify-between items-center py-2">
-                <input type="text" value="${name}" class="border rounded px-2 py-1 w-24 mr-2">
-                <input type="number" value="${gamesBack}" placeholder="0.0" step="0.5" min="0" class="border rounded px-2 py-1 w-24 mr-2">
+                <input type="text" value="${this.teamName}" class="border rounded px-2 py-1 w-24 mr-2">
+                <input type="number" value="${this.gamesBack}" placeholder="0.0" step="0.5" min="0" class="border rounded px-2 py-1 w-24 mr-2">
                 <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
             </li>
         `;*/
         const readonlyHtml = `
-            <div>${name}</div>
-            <div>${gamesBack}</div>
+            <div>${this.teamName}</div>
+            <div>${this.gamesBack}</div>
             <div></div>
             <div></div>
         `;
+        // Don't allow half-games - it doesn't make sense if every team
+        // has the same number of games left to play.
         const editableHtml = `
-            <input type="text" value="${name}" class="border rounded px-2 py-1">
-            <input type="number" value="${gamesBack}" placeholder="0.0" step="0.5" min="0" class="border rounded px-2 py-1">
+            <input type="text" value="${this.teamName}" class="border rounded px-2 py-1">
+            <input type="number" value="${this.gamesBack}" min="0" class="border rounded px-2 py-1">
             <div></div>
             <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
         `;
@@ -66,7 +72,7 @@ class TeamGamesBack extends HTMLElement {
 
         if (!this.readonly) {
             this.shadowRoot.querySelector('input[type="text"]').addEventListener('change', (e) => {
-                this.setAttribute('name', e.target.value);
+                this.setAttribute('teamName', e.target.value);
             });
             this.shadowRoot.querySelector('input[type="number"]').addEventListener('change', (e) => {
                 this.setAttribute('games-back', e.target.value);
@@ -160,14 +166,14 @@ class Division extends HTMLElement {
         team.setAttribute('readonly', this.readonly);
         const existingItems = this.shadowRoot.querySelectorAll('team-games-back');
         let existingNames = new Set();
-        existingItems.forEach(elem => existingNames.add(elem.getAttribute('name').trim()));
+        existingItems.forEach(elem => existingNames.add(elem.teamName));
         let index = existingItems.length;
         let name;
         do {
             name = this.getFakeName(index);
             index++;
         } while (existingNames.has(name));
-        team.setAttribute('name', name);
+        team.setAttribute('team-name', name);
         let newDiv = document.createElement("div");
         newDiv.classList.add("col-start-1", "col-end-5");
         newDiv.appendChild(team);
