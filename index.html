@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Math List Calculator</title>
-    <!--<script src="https://cdn.tailwindcss.com"></script>-->
     <link href="output.css" rel="stylesheet">
 </head>
 
@@ -12,11 +11,17 @@
     <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl">
         <div class="p-8">
             <h1 class="text-2xl font-bold mb-4">Math List Calculator</h1>
+            <division-element readonly="true">
+                <team-games-back name="Astros" games-back="0"></team-games-back>
+                <team-games-back name="Blue Jays" games-back="2.5"></team-games-back>
+                <team-games-back name="Cubs" games-back="3"></team-games-back>
+            </division-element>
+            <br><br>
             <division-element></division-element>
         </div>
     </div>
     <script>
-class ListItem extends HTMLElement {
+class TeamGamesBack extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
@@ -25,41 +30,55 @@ class ListItem extends HTMLElement {
     connectedCallback() {
         this.render();
     }
-
+    get readonly() {
+        return this.getAttribute('readonly') === "true";
+    }
     render() {
-        const value = this.getAttribute('value') || 0;
+        const gamesBack = this.getAttribute('games-back') || 0;
         const name = this.getAttribute('name');
         // TODO - coerce values to nearest 0.5?
         /*this.shadowRoot.innerHTML = `
             <link rel="stylesheet" href="output.css">
             <li class="flex justify-between items-center py-2">
                 <input type="text" value="${name}" class="border rounded px-2 py-1 w-24 mr-2">
-                <input type="number" value="${value}" placeholder="0.0" step="0.5" min="0" class="border rounded px-2 py-1 w-24 mr-2">
+                <input type="number" value="${gamesBack}" placeholder="0.0" step="0.5" min="0" class="border rounded px-2 py-1 w-24 mr-2">
                 <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
             </li>
         `;*/
+        const readonlyHtml = `
+            <div>${name}</div>
+            <div>${gamesBack}</div>
+            <div></div>
+            <div></div>
+        `;
+        const editableHtml = `
+            <input type="text" value="${name}" class="border rounded px-2 py-1">
+            <input type="number" value="${gamesBack}" placeholder="0.0" step="0.5" min="0" class="border rounded px-2 py-1">
+            <div></div>
+            <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+        `;
         this.shadowRoot.innerHTML = `
             <link rel="stylesheet" href="output.css">
-            <div class="grid grid-cols-3">
-            <input type="text" value="${name}" class="border rounded px-2 py-1 col-start-1 col-end-2">
-            <input type="number" value="${value}" placeholder="0.0" step="0.5" min="0" class="border rounded px-2 py-1 col-start-2 col-end-3">
-            <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded col-start-3 col-end-4">Delete</button>
+            <div class="grid grid-cols-4">
+            ${this.readonly ? readonlyHtml : editableHtml}
             </div>
         `;
 
-        this.shadowRoot.querySelector('input[type="text"]').addEventListener('change', (e) => {
-            this.setAttribute('name', e.target.value);
-        });
-        this.shadowRoot.querySelector('input[type="number"]').addEventListener('change', (e) => {
-            this.setAttribute('value', e.target.value);
-        });
-        this.shadowRoot.querySelector('.delete-btn').addEventListener('click', () => {
-            this.remove();
-        });
+        if (!this.readonly) {
+            this.shadowRoot.querySelector('input[type="text"]').addEventListener('change', (e) => {
+                this.setAttribute('name', e.target.value);
+            });
+            this.shadowRoot.querySelector('input[type="number"]').addEventListener('change', (e) => {
+                this.setAttribute('games-back', e.target.value);
+            });
+            this.shadowRoot.querySelector('.delete-btn').addEventListener('click', () => {
+                this.remove();
+            });
+        }
     }
 }
 
-customElements.define('list-item', ListItem);
+customElements.define('team-games-back', TeamGamesBack);
 
 class Division extends HTMLElement {
     constructor() {
@@ -69,6 +88,7 @@ class Division extends HTMLElement {
     connectedCallback() {
         this.render();
         this.setupEventListeners();
+        this.processInitialChildren();
     }
     getFakeName(index) {
         switch (index) {
@@ -96,32 +116,49 @@ class Division extends HTMLElement {
         return `Team ${index + 1}`;
     }
     setupEventListeners() {
-        this.shadowRoot.getElementById('addItem').addEventListener('click', () => this.addItem());
+        this.shadowRoot.getElementById('addItem')?.addEventListener('click', () => this.addItem());
         this.shadowRoot.getElementById('simulate').addEventListener('click', () => {
-            const items = this.shadowRoot.querySelectorAll('list-item');
+            const items = this.shadowRoot.querySelectorAll('team-games-back');
             const sum = Array.from(items).reduce((total, item) => {
-                return total + parseFloat(item.getAttribute('value') || 0);
+                return total + parseFloat(item.getAttribute('games-back') || 0);
             }, 0);
             this.shadowRoot.getElementById('result').textContent = `Sum: ${sum}`;
         });
     }
+    processInitialChildren() {
+        const itemList = this.shadowRoot.getElementById('itemList');
+        Array.from(this.children).forEach(child => {
+            if (child.tagName.toLowerCase() === 'team-games-back') {
+                child.setAttribute('readonly', this.readonly);
+                let newDiv = document.createElement("div");
+                newDiv.classList.add("col-start-1", "col-end-5");
+                newDiv.appendChild(child);
+                itemList.appendChild(newDiv);
+            }
+        });
+    }
+    get readonly() {
+        return this.getAttribute('readonly') === "true";
+    }
     render() {
+        const addItemHtml = `<div class="mb-4">
+                <button id="addItem" class="bg-blue-500 text-white px-4 py-1 rounded">Add New Item</button>
+            </div>`;
         this.shadowRoot.innerHTML = `
             <link rel="stylesheet" href="output.css">
-            <div class="mb-4">
-                <button id="addItem" class="bg-blue-500 text-white px-4 py-1 rounded">Add New Item</button>
-            </div>
-            <div class="grid grid-cols-3" id="itemList">
-                <div>Team</div><div>Games back</div><div></div>
+            ${!this.readonly ? addItemHtml : ""}
+            <div class="grid grid-cols-4" id="itemList">
+                <div>Team</div><div>Games back</div><div>Win%</div><div></div>
             </div>
             <button id="simulate" class="bg-green-500 text-white px-4 py-2 rounded">Simulate Division</button>
             <p id="result" class="mt-4 font-bold"></p>
         `;
     }
     addItem() {
-        const listItem = document.createElement('list-item');
-        listItem.setAttribute('value', '0');
-        const existingItems = this.shadowRoot.querySelectorAll('list-item');
+        const team = document.createElement('team-games-back');
+        team.setAttribute('games-back', '0');
+        team.setAttribute('readonly', this.readonly);
+        const existingItems = this.shadowRoot.querySelectorAll('team-games-back');
         let existingNames = new Set();
         existingItems.forEach(elem => existingNames.add(elem.getAttribute('name').trim()));
         let index = existingItems.length;
@@ -130,10 +167,10 @@ class Division extends HTMLElement {
             name = this.getFakeName(index);
             index++;
         } while (existingNames.has(name));
-        listItem.setAttribute('name', name);
+        team.setAttribute('name', name);
         let newDiv = document.createElement("div");
-        newDiv.classList.add("col-start-1", "col-end-4");
-        newDiv.appendChild(listItem);
+        newDiv.classList.add("col-start-1", "col-end-5");
+        newDiv.appendChild(team);
         this.shadowRoot.getElementById('itemList').appendChild(newDiv);
     }
 }
