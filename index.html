@@ -27,18 +27,32 @@ class ListItem extends HTMLElement {
     }
 
     render() {
-        const value = this.getAttribute('value') || '';
-        this.shadowRoot.innerHTML = `
+        const value = this.getAttribute('value') || 0;
+        const name = this.getAttribute('name');
+        // TODO - coerce values to nearest 0.5?
+        /*this.shadowRoot.innerHTML = `
             <link rel="stylesheet" href="output.css">
             <li class="flex justify-between items-center py-2">
-                <input type="number" value="${value}" class="border rounded px-2 py-1 w-24 mr-2">
+                <input type="text" value="${name}" class="border rounded px-2 py-1 w-24 mr-2">
+                <input type="number" value="${value}" placeholder="0.0" step="0.5" min="0" class="border rounded px-2 py-1 w-24 mr-2">
                 <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
             </li>
+        `;*/
+        this.shadowRoot.innerHTML = `
+            <link rel="stylesheet" href="output.css">
+            <div class="grid grid-cols-3">
+            <input type="text" value="${name}" class="border rounded px-2 py-1 col-start-1 col-end-2">
+            <input type="number" value="${value}" placeholder="0.0" step="0.5" min="0" class="border rounded px-2 py-1 col-start-2 col-end-3">
+            <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded col-start-3 col-end-4">Delete</button>
+            </div>
         `;
-        this.shadowRoot.querySelector('input').addEventListener('change', (e) => {
+
+        this.shadowRoot.querySelector('input[type="text"]').addEventListener('change', (e) => {
+            this.setAttribute('name', e.target.value);
+        });
+        this.shadowRoot.querySelector('input[type="number"]').addEventListener('change', (e) => {
             this.setAttribute('value', e.target.value);
         });
-
         this.shadowRoot.querySelector('.delete-btn').addEventListener('click', () => {
             this.remove();
         });
@@ -56,10 +70,34 @@ class Division extends HTMLElement {
         this.render();
         this.setupEventListeners();
     }
-
+    getFakeName(index) {
+        switch (index) {
+            case 0:
+                return "Astros";
+            case 1:
+                return "Blue Jays";
+            case 2:
+                return "Cubs";
+            case 3:
+                return "Dodgers";
+            case 4:
+                return "Eagles";
+            case 5:
+                return "Falcons";
+            case 6:
+                return "Giants";
+            case 7:
+                return "Heat";
+            case 8:
+                return "Islanders";
+            case 9:
+                return "Jazz";
+        }
+        return `Team ${index + 1}`;
+    }
     setupEventListeners() {
         this.shadowRoot.getElementById('addItem').addEventListener('click', () => this.addItem());
-        this.shadowRoot.getElementById('calculate').addEventListener('click', () => {
+        this.shadowRoot.getElementById('simulate').addEventListener('click', () => {
             const items = this.shadowRoot.querySelectorAll('list-item');
             const sum = Array.from(items).reduce((total, item) => {
                 return total + parseFloat(item.getAttribute('value') || 0);
@@ -73,15 +111,30 @@ class Division extends HTMLElement {
             <div class="mb-4">
                 <button id="addItem" class="bg-blue-500 text-white px-4 py-1 rounded">Add New Item</button>
             </div>
-            <ul id="itemList" class="mb-4"></ul>
-            <button id="calculate" class="bg-green-500 text-white px-4 py-2 rounded">Calculate Sum</button>
+            <div class="grid grid-cols-3" id="itemList">
+                <div>Team</div><div>Games back</div><div></div>
+            </div>
+            <button id="simulate" class="bg-green-500 text-white px-4 py-2 rounded">Simulate Division</button>
             <p id="result" class="mt-4 font-bold"></p>
         `;
     }
     addItem() {
         const listItem = document.createElement('list-item');
         listItem.setAttribute('value', '0');
-        this.shadowRoot.querySelector('#itemList').appendChild(listItem);
+        const existingItems = this.shadowRoot.querySelectorAll('list-item');
+        let existingNames = new Set();
+        existingItems.forEach(elem => existingNames.add(elem.getAttribute('name').trim()));
+        let index = existingItems.length;
+        let name;
+        do {
+            name = this.getFakeName(index);
+            index++;
+        } while (existingNames.has(name));
+        listItem.setAttribute('name', name);
+        let newDiv = document.createElement("div");
+        newDiv.classList.add("col-start-1", "col-end-4");
+        newDiv.appendChild(listItem);
+        this.shadowRoot.getElementById('itemList').appendChild(newDiv);
     }
 }
 
