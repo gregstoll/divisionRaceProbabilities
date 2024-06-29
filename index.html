@@ -21,6 +21,18 @@
         </div>
     </div>
     <script>
+function simulateDivision(gamesBackArray, gamesLeft, iterations) {
+    for (let i = 0; i < iterations; i++) {
+        let wins = gamesBackArray.map(x => -1 * x);
+        for (let g = 0; g < gamesLeft; g++) {
+            for (let j = 0; j < wins.length; j++) {
+                wins[j] += Math.floor(Math.random() * 2);
+            }
+        }
+    }
+    // TODO - aggregate these
+    return wins;
+}
 class TeamGamesBack extends HTMLElement {
     constructor() {
         super();
@@ -125,10 +137,9 @@ class Division extends HTMLElement {
         this.shadowRoot.getElementById('addItem')?.addEventListener('click', () => this.addItem());
         this.shadowRoot.getElementById('simulate').addEventListener('click', () => {
             const items = this.shadowRoot.querySelectorAll('team-games-back');
-            const sum = Array.from(items).reduce((total, item) => {
-                return total + parseFloat(item.getAttribute('games-back') || 0);
-            }, 0);
-            this.shadowRoot.getElementById('result').textContent = `Sum: ${sum}`;
+            const gamesBackArray = Array.from(items).map(item => item.gamesBack);
+            let results = simulateDivision(gamesBackArray, 80, 1000);
+            this.shadowRoot.getElementById('result').textContent = `Wins: ${results}`;
         });
     }
     processInitialChildren() {
