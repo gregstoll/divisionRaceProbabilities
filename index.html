@@ -22,6 +22,10 @@
     </div>
     <script>
 function simulateDivision(gamesBackArray, gamesLeft, iterations) {
+    if (gamesBackArray.length === 0) {
+        return [];
+    }
+    let results = Array.from(gamesBackArray.map(_ => new Array(gamesBackArray.length).fill(0)));
     for (let i = 0; i < iterations; i++) {
         let wins = gamesBackArray.map(x => -1 * x);
         for (let g = 0; g < gamesLeft; g++) {
@@ -29,9 +33,35 @@ function simulateDivision(gamesBackArray, gamesLeft, iterations) {
                 wins[j] += Math.floor(Math.random() * 2);
             }
         }
+        // TODO - split this out into a separate function
+        // and add tests
+        // Array.toSorted() isn't quite widely supported enough yet...
+        let sortedWins = [...wins];
+        sortedWins.sort((a,b) => b - a);
+        // Ties are annoying. TODO doc
+        let lastValue = sortedWins[0] + 1;
+        let winsIndex = 0;
+        let currentPosition = 0;
+        while (winsIndex < sortedWins.length) {
+            let lastWinsIndex = winsIndex;
+            while (sortedWins[winsIndex] === lastValue && winsIndex < sortedWins.length)  {
+                winsIndex++;
+            }
+            let numberOfTies = winsIndex - lastWinsIndex;
+            for (let k = 0; k < sortedWins.length; k++) {
+                if (wins[k] === sortedWins[winsIndex - 1]) {
+                    for (let m = 0; m < numberOfTies; m++) {
+                        results[k][currentPosition+m] += 1.0 / numberOfTies;
+                    }
+                }
+            }
+            currentPosition += numberOfTies;
+            if (winsIndex < sortedWins.length) {
+                lastValue = sortedWins[winsIndex];
+            }
+        }
     }
-    // TODO - aggregate these
-    return wins;
+    return results;
 }
 class TeamGamesBack extends HTMLElement {
     constructor() {
@@ -51,6 +81,12 @@ class TeamGamesBack extends HTMLElement {
     get teamName() {
         return this.getAttribute('team-name').trim();
     }
+    set qualifyPercentage(value) {
+        this.setAttribute('qualify-percentage', value);
+    }
+    get qualifyPercentage() {
+        return this.getAttribute('qualify-percentage');
+    }
 
     render() {
         /*this.shadowRoot.innerHTML = `
@@ -61,10 +97,14 @@ class TeamGamesBack extends HTMLElement {
                 <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
             </li>
         `;*/
+        let winPercentageText = "";
+        if (this.qualifyPercentage !== null) {
+            winPercentageText = (Math.round(Number.parseFloat(this.qualifyPercentage) * 1000) / 10 ) + "%";
+        }
         const readonlyHtml = `
             <div>${this.teamName}</div>
             <div>${this.gamesBack}</div>
-            <div></div>
+            <div>${winPercentageText}</div>
             <div></div>
         `;
         // Don't allow half-games - it doesn't make sense if every team
@@ -72,7 +112,7 @@ class TeamGamesBack extends HTMLElement {
         const editableHtml = `
             <input type="text" value="${this.teamName}" class="border rounded px-2 py-1">
             <input type="number" value="${this.gamesBack}" min="0" class="border rounded px-2 py-1">
-            <div></div>
+            <div>${winPercentageText}</div>
             <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
         `;
         this.shadowRoot.innerHTML = `
@@ -139,7 +179,10 @@ class Division extends HTMLElement {
             const items = this.shadowRoot.querySelectorAll('team-games-back');
             const gamesBackArray = Array.from(items).map(item => item.gamesBack);
             let results = simulateDivision(gamesBackArray, 80, 1000);
-            this.shadowRoot.getElementById('result').textContent = `Wins: ${results}`;
+            items.forEach((item, index) => {
+                item.qualifyPercentage = results[index][0] / 1000;
+                item.render();
+            });
         });
     }
     processInitialChildren() {
@@ -168,7 +211,6 @@ class Division extends HTMLElement {
                 <div>Team</div><div>Games back</div><div>Win%</div><div></div>
             </div>
             <button id="simulate" class="bg-green-500 text-white px-4 py-2 rounded">Simulate Division</button>
-            <p id="result" class="mt-4 font-bold"></p>
         `;
     }
     addItem() {
