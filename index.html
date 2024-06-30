@@ -18,9 +18,40 @@
             </division-element>
             <br><br>
             <division-element></division-element>
+            <details><summary></summary>
+                <button id="runTests" class="bg-yellow-500 text-white px-4 py-2 rounded">Run tests</button>
+                <div id="testResults"></div>
+            </details>
         </div>
     </div>
     <script>
+function accumulateSimulationResults(results, wins) {
+    // Array.toSorted() isn't quite widely supported enough yet...
+    let sortedWins = [...wins];
+    sortedWins.sort((a,b) => b - a);
+    // Ties are annoying. TODO doc
+    let lastValue = sortedWins[0] + 1;
+    let winsIndex = 0;
+    let currentPosition = 0;
+    while (winsIndex < sortedWins.length) {
+        let lastWinsIndex = winsIndex;
+        while (sortedWins[winsIndex] === lastValue && winsIndex < sortedWins.length)  {
+            winsIndex++;
+        }
+        let numberOfTies = winsIndex - lastWinsIndex;
+        for (let k = 0; k < sortedWins.length; k++) {
+            if (wins[k] === sortedWins[winsIndex - 1]) {
+                for (let m = 0; m < numberOfTies; m++) {
+                    results[k][currentPosition+m] += 1.0 / numberOfTies;
+                }
+            }
+        }
+        currentPosition += numberOfTies;
+        if (winsIndex < sortedWins.length) {
+            lastValue = sortedWins[winsIndex];
+        }
+    }
+}
 function simulateDivision(gamesBackArray, gamesLeft, iterations) {
     if (gamesBackArray.length === 0) {
         return [];
@@ -33,33 +64,7 @@ function simulateDivision(gamesBackArray, gamesLeft, iterations) {
                 wins[j] += Math.floor(Math.random() * 2);
             }
         }
-        // TODO - split this out into a separate function
-        // and add tests
-        // Array.toSorted() isn't quite widely supported enough yet...
-        let sortedWins = [...wins];
-        sortedWins.sort((a,b) => b - a);
-        // Ties are annoying. TODO doc
-        let lastValue = sortedWins[0] + 1;
-        let winsIndex = 0;
-        let currentPosition = 0;
-        while (winsIndex < sortedWins.length) {
-            let lastWinsIndex = winsIndex;
-            while (sortedWins[winsIndex] === lastValue && winsIndex < sortedWins.length)  {
-                winsIndex++;
-            }
-            let numberOfTies = winsIndex - lastWinsIndex;
-            for (let k = 0; k < sortedWins.length; k++) {
-                if (wins[k] === sortedWins[winsIndex - 1]) {
-                    for (let m = 0; m < numberOfTies; m++) {
-                        results[k][currentPosition+m] += 1.0 / numberOfTies;
-                    }
-                }
-            }
-            currentPosition += numberOfTies;
-            if (winsIndex < sortedWins.length) {
-                lastValue = sortedWins[winsIndex];
-            }
-        }
+        accumulateSimulationResults(results, wins);
     }
     return results;
 }
@@ -237,6 +242,47 @@ class Division extends HTMLElement {
 customElements.define('division-element', Division);
 
 document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById("runTests").addEventListener('click', () => {
+        function assert(expected, actual, description) {
+            if (expected - actual >= 0.01) {
+                throw `${description} - expected ${expected}, actual ${actual}`;
+            }
+        }
+        function assertResults(expected, actual, description) {
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    assert(expected[i][j], actual[i][j], `${description} element[${i}][${j}]`);
+                }
+            }
+        }
+        function runTest(wins, expectedResults) {
+            let results = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+            accumulateSimulationResults(results, wins);
+            assertResults(expectedResults, results, `${wins}`);
+        }
+        document.getElementById("testResults").innerHTML = "";
+        try {
+            runTest([4, 6, 5], [[0, 0, 1], [1, 0, 0], [0, 1, 0]]);
+            runTest([4, 4, 5], [[0, 0.5, 0.5], [0, 0.5, 0.5], [1, 0, 0]]);
+            runTest([5, 4, 5], [[0.5, 0.5, 0], [0, 0, 1], [0.5, 0.5, 0]]);
+            runTest([5, 5, 5], [[0.333, 0.333, 0.333], [0.333, 0.333, 0.333], [0.333, 0.333, 0.333]]);
+        }
+        catch (failure) {
+            let div = document.createElement("div");
+            div.classList.add("bg-red-500");
+            div.classList.add("text-white");
+            div.appendChild(document.createTextNode(`Tests failed: ${failure}`));
+            document.getElementById('testResults').appendChild(div);
+
+        }
+        if (document.getElementById('testResults').children.length === 0) {
+            let div = document.createElement("div");
+            div.classList.add("bg-green-500");
+            div.classList.add("text-white");
+            div.appendChild(document.createTextNode("Tests passed!"));
+            document.getElementById('testResults').appendChild(div);
+        }
+    });
 });
 </script>
  
