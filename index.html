@@ -25,8 +25,10 @@
     </div>
     <script>
 // TODO
-// - when change anything about a team, remove previous simulation results
-// - add a "top <X> teams qualify"
+// - when change anything about a team, gray out previous simulation results
+// - margins, especially for editable
+// - centering for editable
+// - pie chart? (this won't work with > 1)
 function accumulateSimulationResults(results, wins) {
     // Array.toSorted() isn't quite widely supported enough yet...
     let sortedWins = [...wins];
@@ -117,8 +119,8 @@ class TeamGamesBack extends HTMLElement {
         // Don't allow half-games - it doesn't make sense if every team
         // has the same number of games left to play.
         const editableHtml = `
-            <input type="text" value="${this.teamName}" class="border rounded px-2 py-1">
-            <input type="number" value="${this.gamesBack}" min="0" class="border rounded px-2 py-1">
+            <input type="text" class="teamName" value="${this.teamName}" class="border rounded px-2 py-1">
+            <input type="number" class="gamesBack" value="${this.gamesBack}" min="0" class="border rounded px-2 py-1">
             <div>${winPercentageText}</div>
             <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
         `;
@@ -130,10 +132,10 @@ class TeamGamesBack extends HTMLElement {
         `;
 
         if (!this.readonly) {
-            this.shadowRoot.querySelector('input[type="text"]').addEventListener('change', (e) => {
+            this.shadowRoot.querySelector('input.teamName').addEventListener('change', (e) => {
                 this.setAttribute('teamName', e.target.value);
             });
-            this.shadowRoot.querySelector('input[type="number"]').addEventListener('change', (e) => {
+            this.shadowRoot.querySelector('input.gamesBack').addEventListener('change', (e) => {
                 this.setAttribute('games-back', e.target.value);
             });
             this.shadowRoot.querySelector('.delete-btn').addEventListener('click', () => {
@@ -182,6 +184,9 @@ class Division extends HTMLElement {
     }
     setupEventListeners() {
         this.shadowRoot.getElementById('addItem')?.addEventListener('click', () => this.addItem());
+        this.shadowRoot.getElementById('numberOfWinningTeams')?.addEventListener('change', (e) => {
+            this.setAttribute('winningTeams', e.target.value);
+        });
         this.shadowRoot.getElementById('simulate').addEventListener('click', () => {
             const items = this.shadowRoot.querySelectorAll('team-games-back');
             const gamesBackArray = Array.from(items).map(item => item.gamesBack);
@@ -221,9 +226,14 @@ class Division extends HTMLElement {
         const addItemHtml = `<div class="mb-4">
                 <button id="addItem" class="bg-blue-500 text-white px-4 py-1 rounded">Add New Item</button>
             </div>`;
+        const numberOfWinningTeamsReadonlyHtml = `Top ${this.numberOfWinningTeams} teams advance`;
+        const numberOfWinningTeamsEditableHtml = `Top <input type="number" value="${this.numberOfWinningTeams}" min="1" max="10" style="width: 35px;" id="numberOfWinningTeams"> teams advance`;
         this.shadowRoot.innerHTML = `
             <link rel="stylesheet" href="output.css">
             ${!this.readonly ? addItemHtml : ""}
+            <div>${this.readonly ? 
+                    ((this.numberOfWinningTeams > 1) ?  numberOfWinningTeamsReadonlyHtml : "")
+                    : numberOfWinningTeamsEditableHtml}</div>
             <div class="grid grid-cols-4" id="itemList">
                 <div>Team</div><div>Games back</div><div>Win %</div><div></div>
             </div>
