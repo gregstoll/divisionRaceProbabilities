@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math List Calculator</title>
+    <title>Division Race Probabilities</title>
     <link href="output.css" rel="stylesheet">
 </head>
 
 <body class="bg-gray-100 p-8">
     <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl">
         <div class="p-8">
-            <h1 class="text-2xl font-bold mb-4">Math List Calculator</h1>
+            <h1 class="text-2xl font-bold mb-4">Division Race Probabilities</h1>
             <division-element readonly="true">
                 <team-games-back team-name="Astros" games-back="0"></team-games-back>
-                <team-games-back team-name="Blue Jays" games-back="2"></team-games-back>
-                <team-games-back team-name="Cubs" games-back="3"></team-games-back>
+                <team-games-back team-name="Blue Jays" games-back="3"></team-games-back>
             </division-element>
             <br><br>
             <division-element></division-element>
@@ -195,7 +194,10 @@ class Division extends HTMLElement {
     }
     processInitialChildren() {
         const itemList = this.shadowRoot.getElementById('itemList');
-        Array.from(this.children).forEach(child => {
+        let childrenArray = Array.from(this.children)
+            .filter(child => child.tagName.toLowerCase() === 'team-games-back');
+        const isEmpty = childrenArray.length === 0;
+        childrenArray.forEach(child => {
             if (child.tagName.toLowerCase() === 'team-games-back') {
                 child.setAttribute('readonly', this.readonly);
                 let newDiv = document.createElement("div");
@@ -204,6 +206,9 @@ class Division extends HTMLElement {
                 itemList.appendChild(newDiv);
             }
         });
+        if (isEmpty) {
+            this.addItem();
+        }
     }
     get numberOfWinningTeams() {
         const winningTeams = parseInt(this.getAttribute('winningTeams'), 10);
