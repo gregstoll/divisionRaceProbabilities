@@ -27,6 +27,7 @@
     <script>
 // TODO
 // - when change anything about a team, remove previous simulation results
+// - add a "top <X> teams qualify"
 function accumulateSimulationResults(results, wins) {
     // Array.toSorted() isn't quite widely supported enough yet...
     let sortedWins = [...wins];
@@ -187,7 +188,7 @@ class Division extends HTMLElement {
             const gamesBackArray = Array.from(items).map(item => item.gamesBack);
             let results = simulateDivision(gamesBackArray, 80, 1000);
             items.forEach((item, index) => {
-                item.qualifyPercentage = results[index][0] / 1000;
+                item.qualifyPercentage = results[index].slice(0, this.numberOfWinningTeams).reduce((sum, v) => sum + v) / 1000;
                 item.render();
             });
         });
@@ -204,6 +205,10 @@ class Division extends HTMLElement {
             }
         });
     }
+    get numberOfWinningTeams() {
+        const winningTeams = parseInt(this.getAttribute('winningTeams'), 10);
+        return (winningTeams && !isNaN(winningTeams)) ? winningTeams : 1;
+    }
     get readonly() {
         return this.getAttribute('readonly') === "true";
     }
@@ -215,7 +220,7 @@ class Division extends HTMLElement {
             <link rel="stylesheet" href="output.css">
             ${!this.readonly ? addItemHtml : ""}
             <div class="grid grid-cols-4" id="itemList">
-                <div>Team</div><div>Games back</div><div>Win%</div><div></div>
+                <div>Team</div><div>Games back</div><div>Win %</div><div></div>
             </div>
             <button id="simulate" class="bg-green-500 text-white px-4 py-2 rounded">Simulate Division</button>
         `;
