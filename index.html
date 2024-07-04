@@ -75,6 +75,7 @@ function simulateDivision(gamesBackArray, gamesLeft, iterations) {
 class TeamGamesBack extends HTMLElement {
     constructor() {
         super();
+        this._simulationsUpToDate = true;
         this.attachShadow({ mode: 'open' });
     }
 
@@ -110,10 +111,11 @@ class TeamGamesBack extends HTMLElement {
         if (this.qualifyPercentage !== null) {
             winPercentageText = (Math.round(Number.parseFloat(this.qualifyPercentage) * 1000) / 10 ) + "%";
         }
+        let winPercentageDiv = `<div class="${this._simulationsUpToDate ? "" : "outOfDate"}">${winPercentageText}</div>`;
         const readonlyHtml = `
             <div>${this.teamName}</div>
             <div>${this.gamesBack}</div>
-            <div>${winPercentageText}</div>
+            ${winPercentageDiv}
             <div></div>
         `;
         // Don't allow half-games - it doesn't make sense if every team
@@ -121,11 +123,14 @@ class TeamGamesBack extends HTMLElement {
         const editableHtml = `
             <input type="text" class="teamName" value="${this.teamName}" class="border rounded px-2 py-1">
             <input type="number" class="gamesBack" value="${this.gamesBack}" min="0" class="border rounded px-2 py-1">
-            <div>${winPercentageText}</div>
+            ${winPercentageDiv}
             <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
         `;
         this.shadowRoot.innerHTML = `
             <link rel="stylesheet" href="output.css">
+            <style>
+                div.outOfDate { color: grey; }
+            </style>
             <div class="grid grid-cols-4">
             ${this.readonly ? readonlyHtml : editableHtml}
             </div>
@@ -133,13 +138,29 @@ class TeamGamesBack extends HTMLElement {
 
         if (!this.readonly) {
             this.shadowRoot.querySelector('input.teamName').addEventListener('change', (e) => {
+                // TODO - use property for this
                 this.setAttribute('teamName', e.target.value);
             });
             this.shadowRoot.querySelector('input.gamesBack').addEventListener('change', (e) => {
-                this.setAttribute('games-back', e.target.value);
+                if (e.target.value !== this.gamesBack) {
+                    // TODO - use property for this
+                    this.setAttribute('games-back', e.target.value);
+                    this.dispatchEvent(new CustomEvent("team-changed", {
+                        bubbles: true,
+                        composed: true
+                    }));
+                }
             });
             this.shadowRoot.querySelector('.delete-btn').addEventListener('click', () => {
+                this.dispatchEvent(new CustomEvent("team-changed", {
+                    bubbles: true,
+                    composed: true
+                }));
                 this.remove();
+            });
+            document.addEventListener("up-to-date-changed", e => {
+                this._simulationsUpToDate = e.detail.upToDate;
+                this.render();
             });
         }
     }
@@ -150,6 +171,7 @@ customElements.define('team-games-back', TeamGamesBack);
 class Division extends HTMLElement {
     constructor() {
         super();
+        this._simulationsUpToDate = true;
         this.attachShadow({ mode: 'open' });
     }
     connectedCallback() {
@@ -157,7 +179,7 @@ class Division extends HTMLElement {
         this.setupEventListeners();
         this.processInitialChildren();
     }
-    getFakeName(index) {
+    makeFakeName(index) {
         switch (index) {
             case 0:
                 return "Astros";
@@ -191,10 +213,14 @@ class Division extends HTMLElement {
             const items = this.shadowRoot.querySelectorAll('team-games-back');
             const gamesBackArray = Array.from(items).map(item => item.gamesBack);
             let results = simulateDivision(gamesBackArray, 80, 1000);
+            this.simulationsUpToDate = true;
             items.forEach((item, index) => {
                 item.qualifyPercentage = results[index].slice(0, this.numberOfWinningTeams).reduce((sum, v) => sum + v) / 1000;
                 item.render();
             });
+        });
+        document.addEventListener("team-changed", e => {
+            this.simulationsUpToDate = false;
         });
     }
     processInitialChildren() {
@@ -240,7 +266,21 @@ class Division extends HTMLElement {
             <button id="simulate" class="bg-green-500 text-white px-4 py-2 rounded">Simulate Division</button>
         `;
     }
+    get simulationsUpToDate() {
+        return this._simulationsUpToDate;
+    }
+    set simulationsUpToDate(value) {
+        if (this._simulationsUpToDate !== value) {
+            this._simulationsUpToDate = value;
+            this.dispatchEvent(new CustomEvent("up-to-date-changed", {
+                detail: {upToDate: value},
+                bubbles: true,
+                composed: true
+            }));
+        }
+    }
     addItem() {
+        this.simulationsUpToDate = false;
         const team = document.createElement('team-games-back');
         team.setAttribute('games-back', '0');
         team.setAttribute('readonly', this.readonly);
@@ -250,7 +290,7 @@ class Division extends HTMLElement {
         let index = existingItems.length;
         let name;
         do {
-            name = this.getFakeName(index);
+            name = this.makeFakeName(index);
             index++;
         } while (existingNames.has(name));
         team.setAttribute('team-name', name);
