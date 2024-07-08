@@ -11,6 +11,9 @@
     <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl">
         <div class="p-8">
             <h1 class="text-2xl font-bold mb-4">Division Race Probabilities</h1>
+            <p>Let's say we have two baseball teams in a division, we're about halfway through
+                the season, and we want to see how likely each team is to win the division at the
+                end of the season.</p>
             <division-element readonly="true">
                 <team-games-back team-name="Astros" games-back="0"></team-games-back>
                 <team-games-back team-name="Blue Jays" games-back="3"></team-games-back>
@@ -25,7 +28,6 @@
     </div>
     <script>
 // TODO
-// - when change anything about a team, gray out previous simulation results
 // - margins, especially for editable
 // - centering for editable
 // - pie chart? (this won't work with > 1)
@@ -33,7 +35,10 @@ function accumulateSimulationResults(results, wins) {
     // Array.toSorted() isn't quite widely supported enough yet...
     let sortedWins = [...wins];
     sortedWins.sort((a,b) => b - a);
-    // Ties are annoying. TODO doc
+    // Ties are annoying.
+    // We will handle this by saying if there are N teams
+    // tied for second place, each team will get 1/N of a
+    // win for second place through (2+N-1)th place.
     let lastValue = sortedWins[0] + 1;
     let winsIndex = 0;
     let currentPosition = 0;
@@ -61,6 +66,9 @@ function simulateDivision(gamesBackArray, gamesLeft, iterations) {
         return [];
     }
     let results = Array.from(gamesBackArray.map(_ => new Array(gamesBackArray.length).fill(0)));
+    // This whole thing is really inefficient, but
+    // modern computers are fast so I'm going to live
+    // with it for now.
     for (let i = 0; i < iterations; i++) {
         let wins = gamesBackArray.map(x => -1 * x);
         for (let g = 0; g < gamesLeft; g++) {
@@ -88,8 +96,20 @@ class TeamGamesBack extends HTMLElement {
     get gamesBack() {
         return parseInt(this.getAttribute('games-back'), 10);
     }
+    set gamesBack(value) {
+        if (value.toString() !== this.gamesBack) {
+            this.setAttribute('games-back', value);
+            this.dispatchEvent(new CustomEvent("team-changed", {
+                bubbles: true,
+                composed: true
+            }));
+        }
+    }
     get teamName() {
         return this.getAttribute('team-name').trim();
+    }
+    set teamName(value) {
+        this.setAttribute('team-name', value.trim());
     }
     set qualifyPercentage(value) {
         this.setAttribute('qualify-percentage', value);
@@ -138,18 +158,10 @@ class TeamGamesBack extends HTMLElement {
 
         if (!this.readonly) {
             this.shadowRoot.querySelector('input.teamName').addEventListener('change', (e) => {
-                // TODO - use property for this
-                this.setAttribute('teamName', e.target.value);
+                this.teamName = e.target.value;
             });
             this.shadowRoot.querySelector('input.gamesBack').addEventListener('change', (e) => {
-                if (e.target.value !== this.gamesBack) {
-                    // TODO - use property for this
-                    this.setAttribute('games-back', e.target.value);
-                    this.dispatchEvent(new CustomEvent("team-changed", {
-                        bubbles: true,
-                        composed: true
-                    }));
-                }
+                this.gamesBack = e.target.value;
             });
             this.shadowRoot.querySelector('.delete-btn').addEventListener('click', () => {
                 this.dispatchEvent(new CustomEvent("team-changed", {
@@ -212,10 +224,12 @@ class Division extends HTMLElement {
         this.shadowRoot.getElementById('simulate').addEventListener('click', () => {
             const items = this.shadowRoot.querySelectorAll('team-games-back');
             const gamesBackArray = Array.from(items).map(item => item.gamesBack);
-            let results = simulateDivision(gamesBackArray, 80, 1000);
+            const GAMES = 80;
+            const NUM_ITERATIONS = 3000;
+            let results = simulateDivision(gamesBackArray, GAMES, NUM_ITERATIONS);
             this.simulationsUpToDate = true;
             items.forEach((item, index) => {
-                item.qualifyPercentage = results[index].slice(0, this.numberOfWinningTeams).reduce((sum, v) => sum + v) / 1000;
+                item.qualifyPercentage = results[index].slice(0, this.numberOfWinningTeams).reduce((sum, v) => sum + v) / NUM_ITERATIONS;
                 item.render();
             });
         });
