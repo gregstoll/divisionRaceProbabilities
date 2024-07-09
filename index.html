@@ -237,7 +237,7 @@ class Division extends HTMLElement {
     setupEventListeners() {
         this.shadowRoot.getElementById('addItem')?.addEventListener('click', () => this.addItem());
         this.shadowRoot.getElementById('numberOfWinningTeams')?.addEventListener('change', (e) => {
-            this.setAttribute('winningTeams', e.target.value);
+            this.numberOfWinningTeams = parseInt(e.target.value, 10);
         });
         this.shadowRoot.getElementById('simulate').addEventListener('click', () => {
             const items = this.shadowRoot.querySelectorAll('team-games-back');
@@ -278,6 +278,16 @@ class Division extends HTMLElement {
         const winningTeams = parseInt(this.getAttribute('winningTeams'), 10);
         return (winningTeams && !isNaN(winningTeams)) ? winningTeams : 1;
     }
+    set numberOfWinningTeams(value) {
+        if (this.numberOfWinningTeams !== value) {
+            this.setAttribute('winningTeams', value.toString());
+            this.simulationsUpToDate = false;
+            // This might change the header text
+            // TODO - fix up event handlers
+            // TODO - this doesn't work at all
+            //this.render();
+        }
+    }
     get readonly() {
         return this.getAttribute('readonly') === "true";
     }
@@ -291,10 +301,10 @@ class Division extends HTMLElement {
             <link rel="stylesheet" href="output.css">
             ${!this.readonly ? addItemHtml : ""}
             <div class="mt-2">${this.readonly ? 
-                    ((this.numberOfWinningTeams > 1) ?  numberOfWinningTeamsReadonlyHtml : "")
+                    ((this.numberOfWinningTeams > 1) ? numberOfWinningTeamsReadonlyHtml : "")
                     : numberOfWinningTeamsEditableHtml}</div>
             <div class="grid grid-cols-4" id="itemList">
-                <div class="font-semibold">Team</div><div class="font-semibold">Games back</div><div class="font-semibold">Win %</div><div></div>
+                <div class="font-semibold">Team</div><div class="font-semibold">Games back</div><div class="font-semibold">${(this.numberOfWinningTeams === 1) ? "Win" : "Advance"} %</div><div></div>
             </div>
             <button id="simulate" class="bg-green-500 text-white px-4 py-2 rounded">Simulate Division</button>
         `;
