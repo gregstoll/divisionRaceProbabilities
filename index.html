@@ -99,7 +99,7 @@ class TeamGamesBack extends HTMLElement {
     set gamesBack(value) {
         if (value.toString() !== this.gamesBack) {
             this.setAttribute('games-back', value);
-            this.dispatchEvent(new CustomEvent("team-changed", {
+            this.shadowRoot.dispatchEvent(new CustomEvent("team-changed", {
                 bubbles: true,
                 composed: true
             }));
@@ -170,7 +170,7 @@ class TeamGamesBack extends HTMLElement {
                 }));
                 this.remove();
             });
-            document.addEventListener("up-to-date-changed", e => {
+            this.shadowRoot.addEventListener("up-to-date-changed", e => {
                 this._simulationsUpToDate = e.detail.upToDate;
                 this.render();
             });
@@ -233,9 +233,12 @@ class Division extends HTMLElement {
                 item.render();
             });
         });
-        document.addEventListener("team-changed", e => {
+        this.shadowRoot.addEventListener("team-changed", e => {
             this.simulationsUpToDate = false;
         });
+    }
+    get childItems() {
+        return Array.from(this.shadowRoot.querySelectorAll('team-games-back'));
     }
     processInitialChildren() {
         const itemList = this.shadowRoot.getElementById('itemList');
@@ -243,13 +246,11 @@ class Division extends HTMLElement {
             .filter(child => child.tagName.toLowerCase() === 'team-games-back');
         const isEmpty = childrenArray.length === 0;
         childrenArray.forEach(child => {
-            if (child.tagName.toLowerCase() === 'team-games-back') {
-                child.setAttribute('readonly', this.readonly);
-                let newDiv = document.createElement("div");
-                newDiv.classList.add("col-start-1", "col-end-5");
-                newDiv.appendChild(child);
-                itemList.appendChild(newDiv);
-            }
+            child.setAttribute('readonly', this.readonly);
+            let newDiv = document.createElement("div");
+            newDiv.classList.add("col-start-1", "col-end-5");
+            newDiv.appendChild(child);
+            itemList.appendChild(newDiv);
         });
         if (isEmpty) {
             this.addItem();
@@ -286,11 +287,14 @@ class Division extends HTMLElement {
     set simulationsUpToDate(value) {
         if (this._simulationsUpToDate !== value) {
             this._simulationsUpToDate = value;
-            this.dispatchEvent(new CustomEvent("up-to-date-changed", {
+            let e = new CustomEvent("up-to-date-changed", {
                 detail: {upToDate: value},
                 bubbles: true,
                 composed: true
-            }));
+            });
+            for (const child of this.childItems) {
+                child.shadowRoot.dispatchEvent(e);
+            }
         }
     }
     addItem() {
