@@ -239,7 +239,7 @@ class Division extends HTMLElement {
             this.simulationsUpToDate = false;
         });
     }
-    get childItems() {
+    get childTeamGamesBack() {
         return Array.from(this.shadowRoot.querySelectorAll('team-games-back'));
     }
     processInitialChildren() {
@@ -294,7 +294,7 @@ class Division extends HTMLElement {
                 bubbles: true,
                 composed: true
             });
-            for (const child of this.childItems) {
+            for (const child of this.childTeamGamesBack) {
                 child.shadowRoot.dispatchEvent(e);
             }
         }
