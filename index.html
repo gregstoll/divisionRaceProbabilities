@@ -26,7 +26,6 @@
                 <team-games-back team-name="Astros" games-back="0"></team-games-back>
                 <team-games-back team-name="Blue Jays" games-back="2"></team-games-back>
             </division-element>
-            <br><br>
             <p>Great! So, being 2 games back, the Blue Jays have around a 38% chance of winning the division.
             </p>
             <division-element readonly="true">
@@ -299,6 +298,7 @@ class Division extends HTMLElement {
         const numberOfWinningTeamsEditableHtml = `Top <input type="number" value="${this.numberOfWinningTeams}" min="1" max="10" style="width: 35px;" id="numberOfWinningTeams"> teams advance`;
         this.shadowRoot.innerHTML = `
             <link rel="stylesheet" href="output.css">
+            <div class="mb-8 border-solid border-2 border-neutral-600 rounded-lg p-4">
             ${!this.readonly ? addItemHtml : ""}
             <div class="mt-2">${this.readonly ? 
                     ((this.numberOfWinningTeams > 1) ? numberOfWinningTeamsReadonlyHtml : "")
@@ -307,6 +307,7 @@ class Division extends HTMLElement {
                 <div class="font-semibold">Team</div><div class="font-semibold">Games back</div><div class="font-semibold">${(this.numberOfWinningTeams === 1) ? "Win" : "Advance"} %</div><div></div>
             </div>
             <button id="simulate" class="bg-green-500 text-white px-4 py-2 rounded">Simulate Division</button>
+            </div>
         `;
     }
     get simulationsUpToDate() {
