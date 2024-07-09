@@ -157,23 +157,25 @@ class TeamGamesBack extends HTMLElement {
         `;
 
         if (!this.readonly) {
+            this.eventListenerAbortController?.abort();
+            this.eventListenerAbortController = new AbortController();
             this.shadowRoot.querySelector('input.teamName').addEventListener('change', (e) => {
                 this.teamName = e.target.value;
-            });
+            }, {signal : this.eventListenerAbortController.signal});
             this.shadowRoot.querySelector('input.gamesBack').addEventListener('change', (e) => {
                 this.gamesBack = e.target.value;
-            });
+            }, {signal : this.eventListenerAbortController.signal});
             this.shadowRoot.querySelector('.delete-btn').addEventListener('click', () => {
                 this.dispatchEvent(new CustomEvent("team-changed", {
                     bubbles: true,
                     composed: true
                 }));
                 this.remove();
-            });
+            }, {signal : this.eventListenerAbortController.signal});
             this.shadowRoot.addEventListener("up-to-date-changed", e => {
                 this._simulationsUpToDate = e.detail.upToDate;
                 this.render();
-            });
+            }, {signal : this.eventListenerAbortController.signal});
         }
     }
 }
