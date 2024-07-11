@@ -292,9 +292,7 @@ class Division extends HTMLElement {
             this.setAttribute('winningTeams', value.toString());
             this.simulationsUpToDate = false;
             // This might change the header text
-            // TODO - fix up event handlers
-            // TODO - this doesn't work at all
-            //this.render();
+            this.setWinOrAdvanceText();
         }
     }
     get readonly() {
@@ -314,11 +312,16 @@ class Division extends HTMLElement {
                     ((this.numberOfWinningTeams > 1) ? numberOfWinningTeamsReadonlyHtml : "")
                     : numberOfWinningTeamsEditableHtml}</div>
             <div class="grid grid-cols-4" id="itemList">
-                <div class="font-semibold">Team</div><div class="font-semibold">Games back</div><div class="font-semibold">${(this.numberOfWinningTeams === 1) ? "Win" : "Advance"} %</div><div></div>
+                <div class="font-semibold">Team</div><div class="font-semibold">Games back</div><div class="font-semibold"><span id="winOrAdvanceText"></span> %</div><div></div>
             </div>
             <button id="simulate" class="bg-green-500 text-white px-4 py-2 rounded">Simulate Division</button>
             </div>
         `;
+        this.setWinOrAdvanceText();
+    }
+    setWinOrAdvanceText() {
+        const text = (this.numberOfWinningTeams === 1) ? "Win" : "Advance";
+        this.shadowRoot.getElementById("winOrAdvanceText").innerText = text;
     }
     get simulationsUpToDate() {
         return this._simulationsUpToDate;
