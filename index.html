@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Division Race Probabilities</title>
     <link href="output.css" rel="stylesheet">
+    <style>
+        a {
+            color: rgb(37 99 235);
+            text-decoration: underline;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 p-8">
@@ -43,7 +49,19 @@
                 to win the division!
             </p>
  
-            <division-element></division-element>
+            <p><a href="https://www.mlb.com/standings/wild-card/league?date=2024-07-01">Wild card standings</a></a></p>
+            <division-element readonly="true" winningTeams="3">
+                <team-games-back team-name="Braves" games-back="0"></team-games-back>
+                <team-games-back team-name="Padres" games-back="3"></team-games-back>
+                <team-games-back team-name="Cardinals" games-back="4"></team-games-back>
+                <team-games-back team-name="Mets" games-back="5"></team-games-back>
+                <team-games-back team-name="Diamondbacks" games-back="6"></team-games-back>
+                <team-games-back team-name="Giants" games-back="6"></team-games-back>
+                <team-games-back team-name="Pirates" games-back="6"></team-games-back>
+                <team-games-back team-name="Reds" games-back="8"></team-games-back>
+                <team-games-back team-name="Nationals" games-back="8"></team-games-back>
+                <team-games-back team-name="Cubs" games-back="9"></team-games-back>
+            </division-element>
 
             <details class="mt-8"><summary></summary>
                 <button id="runTests" class="bg-yellow-500 text-white px-4 py-2 rounded">Run tests</button>
