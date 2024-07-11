@@ -28,13 +28,23 @@
             </division-element>
             <p>Great! So, being 2 games back, the Blue Jays have around a 38% chance of winning the division.
             </p>
+            <p>But, now let's add a few more teams to the division.</p>
+            <p>&hookrightarrow; Click <span class="bg-green-500 text-white">Simulate Division</span> below to calculate
+            the probabilities.</p>
             <division-element readonly="true">
                 <team-games-back team-name="Astros" games-back="0"></team-games-back>
                 <team-games-back team-name="Blue Jays" games-back="2"></team-games-back>
                 <team-games-back team-name="Cubs" games-back="3"></team-games-back>
+                <team-games-back team-name="Dodgers" games-back="3"></team-games-back>
+                <team-games-back team-name="Eagles" games-back="4"></team-games-back>
             </division-element>
+            <p>Even though the Blue Jays are still the same number of games back, and
+                the new teams are further behind, this still reduces them to around a 21% chance
+                to win the division!
+            </p>
  
             <division-element></division-element>
+
             <details class="mt-8"><summary></summary>
                 <button id="runTests" class="bg-yellow-500 text-white px-4 py-2 rounded">Run tests</button>
                 <div id="testResults"></div>
@@ -298,7 +308,7 @@ class Division extends HTMLElement {
         const numberOfWinningTeamsEditableHtml = `Top <input type="number" value="${this.numberOfWinningTeams}" min="1" max="10" style="width: 35px;" id="numberOfWinningTeams"> teams advance`;
         this.shadowRoot.innerHTML = `
             <link rel="stylesheet" href="output.css">
-            <div class="mb-8 border-solid border-2 border-neutral-600 rounded-lg p-4">
+            <div class="mb-4 mt-4 border-solid border-2 border-neutral-600 rounded-lg p-4">
             ${!this.readonly ? addItemHtml : ""}
             <div class="mt-2">${this.readonly ? 
                     ((this.numberOfWinningTeams > 1) ? numberOfWinningTeamsReadonlyHtml : "")
