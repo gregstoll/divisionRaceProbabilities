@@ -17,7 +17,7 @@
     <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl">
         <div class="p-8">
             <h1 class="text-2xl font-bold mb-4">Division Race Probabilities</h1>
-            <!--<h2 class="text-xl font-bold">Motivation</h2>-->
+            <h2 class="text-xl font-bold">The Story</h2>
             <p>Let's say we have two baseball teams in a division, we're about halfway through
                 the season, and we want to see how likely each team is to win the division at the
                 end of the season. This is good to know not only for fans, but for front offices
@@ -48,15 +48,25 @@
                 the new teams are further behind, this still reduces them to around a 21% chance
                 to win the division!
             </p>
- 
-            <p><a href="https://www.mlb.com/standings/wild-card/league?date=2024-07-01">Wild card standings</a></a></p>
+            <hr>
+            <p>This comes up a lot with wild card races, where the top 3 teams that aren't
+                division leaders also qualify for the playoffs. Sometimes fans will think "hey, my
+                team is only two games back of a wild card spot, that's hardly anything!", like the Pirates
+                in this example:
+            </p>
+            <p>&hookrightarrow; Click <span class="bg-green-500 text-white">Simulate Division</span> below to calculate
+            the probabilities.</p>
             <division-element readonly="true" winningTeams="3">
                 <team-games-back team-name="Braves" games-back="0"></team-games-back>
                 <team-games-back team-name="Padres" games-back="3"></team-games-back>
                 <team-games-back team-name="Cardinals" games-back="4"></team-games-back>
                 <team-games-back highlight team-name="Pirates" games-back="6"></team-games-back>
             </division-element>
-
+            <p>And an over 50% chance is indeed pretty good! But let's look at the full standings (this is
+            roughly based on the <a href="https://www.mlb.com/standings/wild-card/league?date=2024-07-01">NL wild card standings as of July 1, 2024</a>):
+            </p>
+            <p>&hookrightarrow; Click <span class="bg-green-500 text-white">Simulate Division</span> below to calculate
+            the probabilities.</p>
             <division-element readonly="true" winningTeams="3">
                 <team-games-back team-name="Braves" games-back="0"></team-games-back>
                 <team-games-back team-name="Padres" games-back="3"></team-games-back>
@@ -69,8 +79,20 @@
                 <team-games-back team-name="Nationals" games-back="8"></team-games-back>
                 <team-games-back team-name="Cubs" games-back="9"></team-games-back>
             </division-element>
-
+            <p>The actual chance is less than half of that!</p>
+            <hr>
+            <h2 class="text-xl font-bold">Playground</h2>
+            <p>Here you can play around with your own scenarios! See the Details
+               section below for more information about the assumptions being made.
+            </p>
             <division-element></division-element>
+            <division-element></division-element>
+            <h2 class="text-xl font-bold">Details</h2>
+            <p>This assumes there are exactly 80 games left in the season for all
+                teams (which is why no half-game increments are allowed), and it simulates
+                this 5000 times.
+            </p>
+            <p>TODO - ties</p>
             <details class="mt-8"><summary></summary>
                 <button id="runTests" class="bg-yellow-500 text-white px-4 py-2 rounded">Run tests</button>
                 <div id="testResults"></div>
