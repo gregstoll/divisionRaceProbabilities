@@ -30,7 +30,7 @@
             the probabilities.</p>
             <division-element readonly="true">
                 <team-games-back team-name="Astros" games-back="0"></team-games-back>
-                <team-games-back team-name="Blue Jays" games-back="2"></team-games-back>
+                <team-games-back highlight team-name="Blue Jays" games-back="2"></team-games-back>
             </division-element>
             <p>Great! So, being 2 games back, the Blue Jays have around a 38% chance of winning the division.
             </p>
@@ -39,7 +39,7 @@
             the probabilities.</p>
             <division-element readonly="true">
                 <team-games-back team-name="Astros" games-back="0"></team-games-back>
-                <team-games-back team-name="Blue Jays" games-back="2"></team-games-back>
+                <team-games-back highlight team-name="Blue Jays" games-back="2"></team-games-back>
                 <team-games-back team-name="Cubs" games-back="3"></team-games-back>
                 <team-games-back team-name="Dodgers" games-back="3"></team-games-back>
                 <team-games-back team-name="Eagles" games-back="4"></team-games-back>
@@ -54,10 +54,17 @@
                 <team-games-back team-name="Braves" games-back="0"></team-games-back>
                 <team-games-back team-name="Padres" games-back="3"></team-games-back>
                 <team-games-back team-name="Cardinals" games-back="4"></team-games-back>
+                <team-games-back highlight team-name="Pirates" games-back="6"></team-games-back>
+            </division-element>
+
+            <division-element readonly="true" winningTeams="3">
+                <team-games-back team-name="Braves" games-back="0"></team-games-back>
+                <team-games-back team-name="Padres" games-back="3"></team-games-back>
+                <team-games-back team-name="Cardinals" games-back="4"></team-games-back>
                 <team-games-back team-name="Mets" games-back="5"></team-games-back>
                 <team-games-back team-name="Diamondbacks" games-back="6"></team-games-back>
                 <team-games-back team-name="Giants" games-back="6"></team-games-back>
-                <team-games-back team-name="Pirates" games-back="6"></team-games-back>
+                <team-games-back highlight team-name="Pirates" games-back="6"></team-games-back>
                 <team-games-back team-name="Reds" games-back="8"></team-games-back>
                 <team-games-back team-name="Nationals" games-back="8"></team-games-back>
                 <team-games-back team-name="Cubs" games-back="9"></team-games-back>
@@ -140,6 +147,9 @@ class TeamGamesBack extends HTMLElement {
     get gamesBack() {
         return parseInt(this.getAttribute('games-back'), 10);
     }
+    get highlight() {
+        return this.hasAttribute("highlight");
+    }
     set gamesBack(value) {
         if (value.toString() !== this.gamesBack) {
             this.setAttribute('games-back', value);
@@ -175,10 +185,11 @@ class TeamGamesBack extends HTMLElement {
         if (this.qualifyPercentage !== null) {
             winPercentageText = (Math.round(Number.parseFloat(this.qualifyPercentage) * 1000) / 10).toFixed(1) + "%";
         }
-        let winPercentageDiv = `<div class="${this._simulationsUpToDate ? "" : "outOfDate"} text-right">${winPercentageText}</div>`;
+        const boldClass = this.highlight ? "font-bold" : "";
+        let winPercentageDiv = `<div class="${boldClass} ${this._simulationsUpToDate ? "" : "outOfDate"} text-right">${winPercentageText}</div>`;
         const readonlyHtml = `
-            <div>${this.teamName}</div>
-            <div class="text-right">${this.gamesBack}</div>
+            <div class="${boldClass}">${this.teamName}</div>
+            <div class="text-right ${boldClass}">${this.gamesBack}</div>
             ${winPercentageDiv}
             <div></div>
         `;
