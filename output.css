@@ -571,10 +571,6 @@ video {
   margin-bottom: 1rem;
 }
 
-.mr-2 {
-  margin-right: 0.5rem;
-}
-
 .mt-2 {
   margin-top: 0.5rem;
 }
@@ -587,16 +583,8 @@ video {
   margin-top: 2rem;
 }
 
-.flex {
-  display: flex;
-}
-
 .grid {
   display: grid;
-}
-
-.w-24 {
-  width: 6rem;
 }
 
 .max-w-md {
@@ -605,14 +593,6 @@ video {
 
 .grid-cols-4 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.items-center {
-  align-items: center;
-}
-
-.justify-between {
-  justify-content: space-between;
 }
 
 .overflow-hidden {
