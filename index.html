@@ -10,6 +10,12 @@
             color: rgb(37 99 235);
             text-decoration: underline;
         }
+        hr {
+            margin: 1em 0 1em 0;
+            border: none;
+            height: 2px;
+            background-color: #ccc;
+        }
     </style>
 </head>
 
@@ -88,11 +94,19 @@
             <division-element></division-element>
             <division-element></division-element>
             <h2 class="text-xl font-bold">Details</h2>
-            <p>This assumes there are exactly 80 games left in the season for all
+            <p>First of all, if you actually want to see playoffs odds for baseball,
+            you should just look at <a href="https://www.fangraphs.com/standings/playoff-odds">FanGraphs</a> or
+        <a href="https://www.baseballprospectus.com/standings/">Baseball Reference</a>.</p>
+            <p>The calculations here assume there are exactly 80 games left in the season for all
                 teams (which is why no half-game increments are allowed), and it simulates
-                this 5000 times.
+                this 5000 times. It also doesn't assume any of the teams are playing each other, although
+                I don't think that would make a difference in the percentages.
             </p>
-            <p>TODO - ties</p>
+            <p>These calculation also handle ties in the least sophisticated way possible by giving "partial credit",
+                so if two teams finish with the highest total wins they each get credit for half of a
+                scenario for winning the division. If more than one team advances it's handled in a similar
+                way.
+            </p>
             <details class="mt-8"><summary></summary>
                 <button id="runTests" class="bg-yellow-500 text-white px-4 py-2 rounded">Run tests</button>
                 <div id="testResults"></div>
@@ -195,14 +209,6 @@ class TeamGamesBack extends HTMLElement {
     }
 
     render() {
-        /*this.shadowRoot.innerHTML = `
-            <link rel="stylesheet" href="output.css">
-            <li class="flex justify-between items-center py-2">
-                <input type="text" value="${this.teamName}" class="border rounded px-2 py-1 w-24 mr-2">
-                <input type="number" value="${this.gamesBack}" placeholder="0.0" step="0.5" min="0" class="border rounded px-2 py-1 w-24 mr-2">
-                <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
-            </li>
-        `;*/
         let winPercentageText = "";
         if (this.qualifyPercentage !== null) {
             winPercentageText = (Math.round(Number.parseFloat(this.qualifyPercentage) * 1000) / 10).toFixed(1) + "%";
