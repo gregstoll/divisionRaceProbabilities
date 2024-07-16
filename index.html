@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Division Race Probabilities</title>
+    <link rel="canonical" href="https://gregstoll.com/divisionRaceProbabilities">
     <link href="output.css" rel="stylesheet">
     <style>
         a {
@@ -16,10 +17,17 @@
             height: 2px;
             background-color: #ccc;
         }
+        img {
+            /* tailwind sets this to block, this messes up the image in the navbar */
+            display: inline;
+        }
     </style>
+    <!--#include virtual="/bootstraphead.html"-->
 </head>
 
-<body class="bg-gray-100 p-8">
+<body>
+    <!--#include virtual="/navbar.html"-->
+    <div class="bg-gray-100 p-8">
     <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl">
         <div class="p-8">
             <h1 class="text-2xl font-bold mb-4">Division Race Probabilities</h1>
@@ -114,6 +122,7 @@
                 <div id="testResults"></div>
             </details>
         </div>
+    </div>
     </div>
     <script>
 // TODO
@@ -467,6 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+    <!--#include virtual="/endOfBody.html"-->
  
 </body>
 </html>
