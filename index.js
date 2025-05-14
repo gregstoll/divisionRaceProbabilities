@@ -52,13 +52,37 @@ function simulateDivision(gamesBackArray, gamesLeft, iterations) {
     return results;
 }
 class TeamGamesBack extends HTMLElement {
+    // Would be nice to use class static initialization
+    // blocks but they're not quite widely supported enough
+    // for me.
+    static readOnlyTemplate = document.createElement("template");
+    static editableTemplate = document.createElement("template");
     constructor() {
         super();
         this._simulationsUpToDate = true;
         this.attachShadow({ mode: 'open' });
     }
+    static get observedAttributes() {
+        return ['qualify-percentage', 'simulations-up-to-date', 'team-name', 'games-back'];
+    }
+    attributeChangedCallback(_name, _oldValue, _newValue) {
+        this.render();
+    }
 
     connectedCallback() {
+        this.shadowRoot.innerHTML = `
+            <link rel="stylesheet" href="output.css">
+            <style>
+                div.outOfDate { color: grey; }
+            </style>
+            <div id="mainGrid" class="grid grid-cols-4">
+            </div>
+        `;
+        // Assumes that this.readonly doesn't change
+        this.shadowRoot.getElementById("mainGrid").appendChild(
+            (this.readonly ? TeamGamesBack.readOnlyTemplate : TeamGamesBack.editableTemplate)
+             .content.cloneNode(true));
+        this.isInitialized = true;
         this.render();
     }
     get readonly() {
@@ -91,38 +115,38 @@ class TeamGamesBack extends HTMLElement {
     get qualifyPercentage() {
         return this.getAttribute('qualify-percentage');
     }
+    get simulationsUpToDate() {
+        return this.getAttribute("simulations-up-to-date");
+    }
+    set simulationsUpToDate(value) {
+        this.setAttribute("simulations-up-to-date", value);
+    }
 
+    setDivOrInputValue(element, value) {
+        if (element.tagName.toLowerCase() === "input") {
+            element.value = value;
+        } else {
+            element.innerHTML = value;
+        }
+    }
     render() {
+        // Can get this callback early if some attributes are changed
+        if (!this.isInitialized) {
+            return;
+        }
         let winPercentageText = "";
         if (this.qualifyPercentage !== null) {
             winPercentageText = (Math.round(Number.parseFloat(this.qualifyPercentage) * 1000) / 10).toFixed(1) + "%";
         }
-        const boldClass = this.highlight ? "font-bold" : "";
-        let winPercentageDiv = `<div class="${boldClass} ${this._simulationsUpToDate ? "" : "outOfDate"} text-right">${winPercentageText}</div>`;
-        const readonlyHtml = `
-            <div class="${boldClass}">${this.teamName}</div>
-            <div class="text-right ${boldClass}">${this.gamesBack}</div>
-            ${winPercentageDiv}
-            <div></div>
-        `;
-        // Don't allow half-games - it doesn't make sense if every team
-        // has the same number of games left to play.
-        const editableHtml = `
-            <input type="text" class="teamName" value="${this.teamName}" class="border rounded px-2 py-1">
-            <input type="number" class="gamesBack" value="${this.gamesBack}" min="0" class="border rounded px-2 py-1">
-            ${winPercentageDiv}
-            <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
-        `;
-        this.shadowRoot.innerHTML = `
-            <link rel="stylesheet" href="output.css">
-            <style>
-                div.outOfDate { color: grey; }
-            </style>
-            <div class="grid grid-cols-4">
-            ${this.readonly ? readonlyHtml : editableHtml}
-            </div>
-        `;
+        this.shadowRoot.getElementById("teamName").classList.toggle("font-bold", this.highlight);
+        this.shadowRoot.getElementById("gamesBack").classList.toggle("font-bold", this.highlight);
+        this.shadowRoot.getElementById("winPercentage").classList.toggle("font-bold", this.highlight);
+        this.shadowRoot.getElementById("winPercentage").classList.toggle("outOfDate", !this._simulationsUpToDate);
+        this.setDivOrInputValue(this.shadowRoot.getElementById("teamName"), this.teamName);
+        this.setDivOrInputValue(this.shadowRoot.getElementById("gamesBack"), this.gamesBack);
+        this.setDivOrInputValue(this.shadowRoot.getElementById("winPercentage"), winPercentageText);
 
+        // TODO - set these up once
         if (!this.readonly) {
             this.eventListenerAbortController?.abort();
             this.eventListenerAbortController = new AbortController();
@@ -139,13 +163,24 @@ class TeamGamesBack extends HTMLElement {
                 }));
                 this.remove();
             }, {signal : this.eventListenerAbortController.signal});
-            this.shadowRoot.addEventListener("up-to-date-changed", e => {
-                this._simulationsUpToDate = e.detail.upToDate;
-                this.render();
-            }, {signal : this.eventListenerAbortController.signal});
         }
     }
 }
+
+TeamGamesBack.readOnlyTemplate.innerHTML = `
+            <div id="teamName"></div>
+            <div id="gamesBack" class="text-right"></div>
+            <div id="winPercentage" class="text-right"></div>
+            <div></div>`
+
+// Don't allow half-games - it doesn't make sense if every team
+// has the same number of games left to play.
+TeamGamesBack.editableTemplate.innerHTML = `
+            <input id="teamName" type="text" class="teamName" class="border rounded px-2 py-1">
+            <input id="gamesBack" type="number" class="gamesBack" min="0" class="border rounded px-2 py-1">
+            <div id="winPercentage" class="text-right"></div>
+            <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+            `;
 
 customElements.define('team-games-back', TeamGamesBack);
 
@@ -191,7 +226,7 @@ class Division extends HTMLElement {
             this.numberOfWinningTeams = parseInt(e.target.value, 10);
         });
         this.shadowRoot.getElementById('simulate').addEventListener('click', () => {
-            const items = this.shadowRoot.querySelectorAll('team-games-back');
+            const items = this.childTeamGamesBack;
             const gamesBackArray = Array.from(items).map(item => item.gamesBack);
             const GAMES = 80;
             const NUM_ITERATIONS = 5000;
@@ -199,7 +234,6 @@ class Division extends HTMLElement {
             this.simulationsUpToDate = true;
             items.forEach((item, index) => {
                 item.qualifyPercentage = results[index].slice(0, this.numberOfWinningTeams).reduce((sum, v) => sum + v) / NUM_ITERATIONS;
-                item.render();
             });
         });
         this.shadowRoot.addEventListener("team-changed", e => {
@@ -234,12 +268,14 @@ class Division extends HTMLElement {
             this.setAttribute('winningTeams', value.toString());
             this.simulationsUpToDate = false;
             // This might change the header text
+            // TODO - just call render?
             this.setWinOrAdvanceText();
         }
     }
     get readonly() {
         return this.getAttribute('readonly') === "true";
     }
+    // TODO - use templates or whatever?
     render() {
         const addItemHtml = `<div class="mb-4">
                 <button id="addItem" class="bg-blue-500 text-white px-4 py-1 rounded">Add New Item</button>
@@ -271,13 +307,8 @@ class Division extends HTMLElement {
     set simulationsUpToDate(value) {
         if (this._simulationsUpToDate !== value) {
             this._simulationsUpToDate = value;
-            let e = new CustomEvent("up-to-date-changed", {
-                detail: {upToDate: value},
-                bubbles: true,
-                composed: true
-            });
             for (const child of this.childTeamGamesBack) {
-                child.shadowRoot.dispatchEvent(e);
+                child.simulationsUpToDate = value;
             }
         }
     }
