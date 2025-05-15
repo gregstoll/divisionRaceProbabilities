@@ -70,10 +70,14 @@ class TeamGamesBack extends HTMLElement {
     }
 
     connectedCallback() {
+        let outOfDateStyle = "";
+        if (!this.readonly) {
+            outOfDateStyle = "div.outOfDate { color: grey; }";
+        }
         this.shadowRoot.innerHTML = `
             <link rel="stylesheet" href="output.css">
             <style>
-                div.outOfDate { color: grey; }
+                ${outOfDateStyle}
             </style>
             <div id="mainGrid" class="grid grid-cols-4">
             </div>
@@ -82,8 +86,27 @@ class TeamGamesBack extends HTMLElement {
         this.shadowRoot.getElementById("mainGrid").appendChild(
             (this.readonly ? TeamGamesBack.readOnlyTemplate : TeamGamesBack.editableTemplate)
              .content.cloneNode(true));
+
+        this.setupEventListeners();
         this.isInitialized = true;
         this.render();
+    }
+    setupEventListeners() {
+        if (!this.readonly) {
+            this.shadowRoot.querySelector('input.teamName').addEventListener('change', (e) => {
+                this.teamName = e.target.value;
+            });
+            this.shadowRoot.querySelector('input.gamesBack').addEventListener('change', (e) => {
+                this.gamesBack = e.target.value;
+            });
+            this.shadowRoot.querySelector('.delete-btn').addEventListener('click', () => {
+                this.dispatchEvent(new CustomEvent("team-changed", {
+                    bubbles: true,
+                    composed: true
+                }));
+                this.remove();
+            });
+        }
     }
     get readonly() {
         return this.getAttribute('readonly') === "true";
@@ -116,7 +139,7 @@ class TeamGamesBack extends HTMLElement {
         return this.getAttribute('qualify-percentage');
     }
     get simulationsUpToDate() {
-        return this.getAttribute("simulations-up-to-date");
+        return this.getAttribute("simulations-up-to-date") === "true";
     }
     set simulationsUpToDate(value) {
         this.setAttribute("simulations-up-to-date", value);
@@ -141,29 +164,10 @@ class TeamGamesBack extends HTMLElement {
         this.shadowRoot.getElementById("teamName").classList.toggle("font-bold", this.highlight);
         this.shadowRoot.getElementById("gamesBack").classList.toggle("font-bold", this.highlight);
         this.shadowRoot.getElementById("winPercentage").classList.toggle("font-bold", this.highlight);
-        this.shadowRoot.getElementById("winPercentage").classList.toggle("outOfDate", !this._simulationsUpToDate);
+        this.shadowRoot.getElementById("winPercentage").classList.toggle("outOfDate", !this.simulationsUpToDate);
         this.setDivOrInputValue(this.shadowRoot.getElementById("teamName"), this.teamName);
         this.setDivOrInputValue(this.shadowRoot.getElementById("gamesBack"), this.gamesBack);
         this.setDivOrInputValue(this.shadowRoot.getElementById("winPercentage"), winPercentageText);
-
-        // TODO - set these up once
-        if (!this.readonly) {
-            this.eventListenerAbortController?.abort();
-            this.eventListenerAbortController = new AbortController();
-            this.shadowRoot.querySelector('input.teamName').addEventListener('change', (e) => {
-                this.teamName = e.target.value;
-            }, {signal : this.eventListenerAbortController.signal});
-            this.shadowRoot.querySelector('input.gamesBack').addEventListener('change', (e) => {
-                this.gamesBack = e.target.value;
-            }, {signal : this.eventListenerAbortController.signal});
-            this.shadowRoot.querySelector('.delete-btn').addEventListener('click', () => {
-                this.dispatchEvent(new CustomEvent("team-changed", {
-                    bubbles: true,
-                    composed: true
-                }));
-                this.remove();
-            }, {signal : this.eventListenerAbortController.signal});
-        }
     }
 }
 
