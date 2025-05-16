@@ -66,7 +66,7 @@ class TeamGamesBack extends HTMLElement {
         return ['qualify-percentage', 'simulations-up-to-date', 'team-name', 'games-back'];
     }
     attributeChangedCallback(_name, _oldValue, _newValue) {
-        this.render();
+        this.update();
     }
 
     connectedCallback() {
@@ -89,7 +89,7 @@ class TeamGamesBack extends HTMLElement {
 
         this.setupEventListeners();
         this.isInitialized = true;
-        this.render();
+        this.update();
     }
     setupEventListeners() {
         if (!this.readonly) {
@@ -152,7 +152,7 @@ class TeamGamesBack extends HTMLElement {
             element.innerHTML = value;
         }
     }
-    render() {
+    update() {
         // Can get this callback early if some attributes are changed
         if (!this.isInitialized) {
             return;
@@ -199,7 +199,7 @@ class Division extends HTMLElement {
         return ['simulations-up-to-date'];
     }
     attributeChangedCallback(_name, _oldValue, _newValue) {
-        this.render();
+        this.update();
     }
     connectedCallback() {
         this.processInitialChildren();
@@ -224,7 +224,7 @@ class Division extends HTMLElement {
         `;
         this.setupEventListeners();
         this.isInitialized = true;
-        this.render();
+        this.update();
     }
     makeFakeName(index) {
         switch (index) {
@@ -273,7 +273,7 @@ class Division extends HTMLElement {
         this.shadowRoot.addEventListener("team-deleted", e => {
             let index = this.#items.findIndex(element => element == e.detail.team);
             this.#items.splice(index, 1);
-            // this will trigger a render()
+            // this will trigger a update()
             this.simulationsUpToDate = false;
         });
     }
@@ -301,13 +301,13 @@ class Division extends HTMLElement {
         if (this.numberOfWinningTeams !== value) {
             this.setAttribute('winningTeams', value.toString());
             this.simulationsUpToDate = false;
-            this.render();
+            this.update();
         }
     }
     get readonly() {
         return this.getAttribute('readonly') === "true";
     }
-    render() {
+    update() {
         // Can get this callback early if some attributes are changed
         if (!this.isInitialized) {
             return;
@@ -354,7 +354,7 @@ class Division extends HTMLElement {
         } while (existingNames.has(name));
         team.setAttribute('team-name', name);
         this.#items.push(team);
-        this.render();
+        this.update();
     }
 }
 
