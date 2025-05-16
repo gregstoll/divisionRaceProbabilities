@@ -100,11 +100,11 @@ class TeamGamesBack extends HTMLElement {
                 this.gamesBack = e.target.value;
             });
             this.shadowRoot.querySelector('.delete-btn').addEventListener('click', () => {
-                this.dispatchEvent(new CustomEvent("team-changed", {
+                this.dispatchEvent(new CustomEvent("team-deleted", {
                     bubbles: true,
-                    composed: true
+                    composed: true,
+                    detail: {team: this}
                 }));
-                this.remove();
             });
         }
     }
@@ -189,15 +189,42 @@ TeamGamesBack.editableTemplate.innerHTML = `
 customElements.define('team-games-back', TeamGamesBack);
 
 class Division extends HTMLElement {
+    #items;
     constructor() {
         super();
         this._simulationsUpToDate = true;
         this.attachShadow({ mode: 'open' });
     }
-    connectedCallback() {
+    static get observedAttributes() {
+        return ['simulations-up-to-date'];
+    }
+    attributeChangedCallback(_name, _oldValue, _newValue) {
         this.render();
-        this.setupEventListeners();
+    }
+    connectedCallback() {
         this.processInitialChildren();
+        const addItemHtml = `<div class="mb-4">
+                <button id="addItem" class="bg-blue-500 text-white px-4 py-1 rounded">Add New Item</button>
+            </div>`;
+        const numberOfWinningTeamsReadonlyHtml = `Top ${this.numberOfWinningTeams} teams advance`;
+        const numberOfWinningTeamsEditableHtml = `Top <input type="number" value="${this.numberOfWinningTeams}" min="1" max="10" style="width: 35px;" id="numberOfWinningTeams"> teams advance`;
+        this.shadowRoot.innerHTML = `
+            <link rel="stylesheet" href="output.css">
+            <div class="mb-4 mt-4 border-solid border-2 border-neutral-600 rounded-lg p-4">
+            ${!this.readonly ? addItemHtml : ""}
+            <div class="mt-2">${this.readonly ? 
+                    ((this.numberOfWinningTeams > 1) ? numberOfWinningTeamsReadonlyHtml : "")
+                    : numberOfWinningTeamsEditableHtml}</div>
+            <div class="grid grid-cols-4" id="itemGrid">
+                <div class="font-semibold">Team</div><div class="font-semibold text-right">Games back</div><div class="font-semibold text-right"><span id="winOrAdvanceText"></span> %</div><div></div>
+                <div id="itemListSentinel" style="display: none;"></div>
+            </div>
+            <button id="simulate" class="bg-green-500 text-white px-4 py-2 rounded">Simulate Division</button>
+            </div>
+        `;
+        this.setupEventListeners();
+        this.isInitialized = true;
+        this.render();
     }
     makeFakeName(index) {
         switch (index) {
@@ -231,7 +258,7 @@ class Division extends HTMLElement {
         });
         this.shadowRoot.getElementById('simulate').addEventListener('click', () => {
             const items = this.childTeamGamesBack;
-            const gamesBackArray = Array.from(items).map(item => item.gamesBack);
+            const gamesBackArray = items.map(item => item.gamesBack);
             const GAMES = 80;
             const NUM_ITERATIONS = 5000;
             let results = simulateDivision(gamesBackArray, GAMES, NUM_ITERATIONS);
@@ -243,21 +270,24 @@ class Division extends HTMLElement {
         this.shadowRoot.addEventListener("team-changed", e => {
             this.simulationsUpToDate = false;
         });
+        this.shadowRoot.addEventListener("team-deleted", e => {
+            let index = this.#items.findIndex(element => element == e.detail.team);
+            this.#items.splice(index, 1);
+            // this will trigger a render()
+            this.simulationsUpToDate = false;
+        });
     }
     get childTeamGamesBack() {
-        return Array.from(this.shadowRoot.querySelectorAll('team-games-back'));
+        return this.#items;
     }
     processInitialChildren() {
-        const itemList = this.shadowRoot.getElementById('itemList');
+        this.#items = [];
         let childrenArray = Array.from(this.children)
             .filter(child => child.tagName.toLowerCase() === 'team-games-back');
         const isEmpty = childrenArray.length === 0;
         childrenArray.forEach(child => {
             child.setAttribute('readonly', this.readonly);
-            let newDiv = document.createElement("div");
-            newDiv.classList.add("col-start-1", "col-end-5");
-            newDiv.appendChild(child);
-            itemList.appendChild(newDiv);
+            this.#items.push(child);
         });
         if (isEmpty) {
             this.addItem();
@@ -271,49 +301,41 @@ class Division extends HTMLElement {
         if (this.numberOfWinningTeams !== value) {
             this.setAttribute('winningTeams', value.toString());
             this.simulationsUpToDate = false;
-            // This might change the header text
-            // TODO - just call render?
-            this.setWinOrAdvanceText();
+            this.render();
         }
     }
     get readonly() {
         return this.getAttribute('readonly') === "true";
     }
-    // TODO - use templates or whatever?
     render() {
-        const addItemHtml = `<div class="mb-4">
-                <button id="addItem" class="bg-blue-500 text-white px-4 py-1 rounded">Add New Item</button>
-            </div>`;
-        const numberOfWinningTeamsReadonlyHtml = `Top ${this.numberOfWinningTeams} teams advance`;
-        const numberOfWinningTeamsEditableHtml = `Top <input type="number" value="${this.numberOfWinningTeams}" min="1" max="10" style="width: 35px;" id="numberOfWinningTeams"> teams advance`;
-        this.shadowRoot.innerHTML = `
-            <link rel="stylesheet" href="output.css">
-            <div class="mb-4 mt-4 border-solid border-2 border-neutral-600 rounded-lg p-4">
-            ${!this.readonly ? addItemHtml : ""}
-            <div class="mt-2">${this.readonly ? 
-                    ((this.numberOfWinningTeams > 1) ? numberOfWinningTeamsReadonlyHtml : "")
-                    : numberOfWinningTeamsEditableHtml}</div>
-            <div class="grid grid-cols-4" id="itemList">
-                <div class="font-semibold">Team</div><div class="font-semibold text-right">Games back</div><div class="font-semibold text-right"><span id="winOrAdvanceText"></span> %</div><div></div>
-            </div>
-            <button id="simulate" class="bg-green-500 text-white px-4 py-2 rounded">Simulate Division</button>
-            </div>
-        `;
-        this.setWinOrAdvanceText();
-    }
-    setWinOrAdvanceText() {
+        // Can get this callback early if some attributes are changed
+        if (!this.isInitialized) {
+            return;
+        }
+        // TODO - is this really the best way?
+        let itemGrid = this.shadowRoot.getElementById("itemGrid");
+        while (itemGrid.children.item(itemGrid.children.length - 1).id !== "itemListSentinel") {
+            itemGrid.children.item(itemGrid.children.length - 1).remove();
+        }
+        this.#items.forEach(item => {
+            let newDiv = document.createElement("div");
+            newDiv.classList.add("col-start-1", "col-end-5");
+            newDiv.appendChild(item);
+            itemGrid.appendChild(newDiv);
+        })
+
         const text = (this.numberOfWinningTeams === 1) ? "Win" : "Advance";
         this.shadowRoot.getElementById("winOrAdvanceText").innerText = text;
     }
     get simulationsUpToDate() {
-        return this._simulationsUpToDate;
+        return this.getAttribute('simulations-up-to-date') === 'true';
     }
     set simulationsUpToDate(value) {
-        if (this._simulationsUpToDate !== value) {
-            this._simulationsUpToDate = value;
+        if (this.simulationsUpToDate !== value) {
             for (const child of this.childTeamGamesBack) {
                 child.simulationsUpToDate = value;
             }
+            this.setAttribute("simulations-up-to-date", value.toString());
         }
     }
     addItem() {
@@ -331,10 +353,8 @@ class Division extends HTMLElement {
             index++;
         } while (existingNames.has(name));
         team.setAttribute('team-name', name);
-        let newDiv = document.createElement("div");
-        newDiv.classList.add("col-start-1", "col-end-5");
-        newDiv.appendChild(team);
-        this.shadowRoot.getElementById('itemList').appendChild(newDiv);
+        this.#items.push(team);
+        this.render();
     }
 }
 
