@@ -180,10 +180,10 @@ TeamGamesBack.readOnlyTemplate.innerHTML = `
 // Don't allow half-games - it doesn't make sense if every team
 // has the same number of games left to play.
 TeamGamesBack.editableTemplate.innerHTML = `
-            <input id="teamName" type="text" class="teamName" class="border rounded px-2 py-1">
-            <input id="gamesBack" type="number" class="gamesBack" min="0" class="border rounded px-2 py-1">
-            <div id="winPercentage" class="text-right"></div>
-            <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+            <input id="teamName" type="text" class="teamName border rounded px-2 py-1">
+            <input id="gamesBack" type="number" min="0" class="gamesBack border rounded px-2 py-1 max-w-[6rem] justify-self-end">
+            <div id="winPercentage" class="text-right self-center"></div>
+            <button class="delete-btn bg-red-500 text-white px-2 py-1 rounded max-w-[6rem] ml-[1rem]">Delete</button>
             `;
 
 customElements.define('team-games-back', TeamGamesBack);

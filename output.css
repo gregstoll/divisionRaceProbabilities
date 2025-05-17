@@ -554,6 +554,10 @@ video {
   --tw-contain-style:  ;
 }
 
+.static {
+  position: static;
+}
+
 .col-start-1 {
   grid-column-start: 1;
 }
@@ -571,6 +575,10 @@ video {
   margin-bottom: 1rem;
 }
 
+.ml-\[1rem\] {
+  margin-left: 1rem;
+}
+
 .mt-2 {
   margin-top: 0.5rem;
 }
@@ -583,8 +591,20 @@ video {
   margin-top: 2rem;
 }
 
+.block {
+  display: block;
+}
+
+.inline {
+  display: inline;
+}
+
 .grid {
   display: grid;
+}
+
+.max-w-\[6rem\] {
+  max-width: 6rem;
 }
 
 .max-w-md {
@@ -593,6 +613,14 @@ video {
 
 .grid-cols-4 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.self-center {
+  align-self: center;
+}
+
+.justify-self-end {
+  justify-self: end;
 }
 
 .overflow-hidden {
