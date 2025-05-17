@@ -326,6 +326,9 @@ class Division extends HTMLElement {
 
         const text = (this.numberOfWinningTeams === 1) ? "Win" : "Advance";
         this.shadowRoot.getElementById("winOrAdvanceText").innerText = text;
+        if (!this.readonly) {
+            this.shadowRoot.getElementById("numberOfWinningTeams").value = this.numberOfWinningTeams;
+        }
     }
     get simulationsUpToDate() {
         return this.getAttribute('simulations-up-to-date') === 'true';
